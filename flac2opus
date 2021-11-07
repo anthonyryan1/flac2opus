@@ -10,6 +10,8 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument('flacdir', help='Directory containing FLAC files')
 parser.add_argument('opusdir', help='Directory to store Opus files')
+parser.add_argument('--delete', action='store_true', default=False, help="Delete files from opusdir that are gone from flacdir")
+parser.add_argument('--copy-lossy', action='store_true', default=False, help="Copy lossy files without transcoding")
 args = parser.parse_args()
 
 for parent, dirs, files in os.walk(args.flacdir):
@@ -22,7 +24,17 @@ for parent, dirs, files in os.walk(args.flacdir):
         dst = os.path.join(args.opusdir, path)
 
         if path.endswith('.jpg'):
-            # Skip transcode if already exists
+            # Skip copy if already exists
+            if os.path.isfile(dst):
+                continue
+
+            # Create folder hierarchy
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+
+            # Copy album art
+            shutil.copyfile(src, dst)
+        elif args.copy_lossy and (path.endswith('.mp3') or path.endswith('.m4a')):
+            # Skip copy if already exists
             if os.path.isfile(dst):
                 continue
 
@@ -50,3 +62,23 @@ for parent, dirs, files in os.walk(args.flacdir):
             continue
         else:
             print("Skipped: " + src)
+
+if args.delete:
+    for parent, dirs, files in os.walk(args.opusdir):
+        for file in files:
+            path = os.path.join(parent, file)
+            assert(path.startswith(args.opusdir + '/'))
+            path = path[len(args.opusdir + '/'):]
+
+            src = os.path.join(args.flacdir, path)
+            dst = os.path.join(args.opusdir, path)
+
+            if dst.endswith('.ogg'):
+                src = src[:-len('.ogg')]
+                src = src + '.flac'
+
+            if os.path.isfile(src):
+                continue
+
+            os.remove(dst)
+            print("Deleted " + dst)
