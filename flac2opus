@@ -1,0 +1,52 @@
+#!/bin/env python3
+import argparse
+import os
+import shutil
+import subprocess
+
+parser = argparse.ArgumentParser(
+    description='Convert a directory of FLAC music to Opus',
+    allow_abbrev=False
+)
+parser.add_argument('flacdir', help='Directory containing FLAC files')
+parser.add_argument('opusdir', help='Directory to store Opus files')
+args = parser.parse_args()
+
+for parent, dirs, files in os.walk(args.flacdir):
+    for file in files:
+        path = os.path.join(parent, file)
+        assert(path.startswith(args.flacdir + '/'))
+        path = path[len(args.flacdir + '/'):]
+
+        src = os.path.join(args.flacdir, path)
+        dst = os.path.join(args.opusdir, path)
+
+        if path.endswith('.jpg'):
+            # Skip transcode if already exists
+            if os.path.isfile(dst):
+                continue
+
+            # Create folder hierarchy
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+
+            # Copy album art
+            shutil.copyfile(src, dst)
+        elif path.endswith('.flac'):
+            dst = dst[:-len('.flac')]
+            dst = dst + '.ogg'
+
+            # Skip transcode if already exists
+            if os.path.isfile(dst):
+                continue
+
+            # Create folder hierarchy
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+
+            # Transcode
+            try:
+                subprocess.check_call(['opusenc', '--quiet', src, dst])
+            except subprocess.CalledProcessError:
+                print("Failed: " + src)
+            continue
+        else:
+            print("Skipped: " + src)
