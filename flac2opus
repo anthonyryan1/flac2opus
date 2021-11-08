@@ -23,12 +23,19 @@ for parent, dirs, files in os.walk(args.flacdir):
         src = os.path.join(args.flacdir, path)
         dst = os.path.join(args.opusdir, path)
 
-        if ":" in path:
-            print("Invalid: " + src + ' android forbidden character ":"')
-            continue
-        if "?" in path:
-            print("Invalid: " + src + ' android forbidden character "?"')
-            continue
+        FORBIDDEN_CHARS = [
+            ':',
+            '?',
+            '*',
+            '<',
+            '>',
+            '\\',
+        ]
+
+        for char in FORBIDDEN_CHARS:
+            if char in path:
+                print("Invalid: " + src + ' android forbidden character "%s"' % char)
+                continue
 
         if path.endswith('.jpg'):
             # Skip copy if already exists
