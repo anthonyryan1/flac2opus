@@ -14,11 +14,16 @@ parser.add_argument('--delete', action='store_true', default=False, help="Delete
 parser.add_argument('--copy-lossy', action='store_true', default=False, help="Copy lossy files without transcoding")
 args = parser.parse_args()
 
+if not args.flacdir.endswith('/'):
+    args.flacdir += '/'
+if not args.opusdir.endswith('/'):
+    args.opusdir += '/'
+
 for parent, dirs, files in os.walk(args.flacdir):
     for file in files:
         path = os.path.join(parent, file)
-        assert(path.startswith(args.flacdir + '/'))
-        path = path[len(args.flacdir + '/'):]
+        assert(path.startswith(args.flacdir))
+        path = path[len(args.flacdir):]
 
         src = os.path.join(args.flacdir, path)
         dst = os.path.join(args.opusdir, path)
@@ -81,8 +86,8 @@ if args.delete:
     for parent, dirs, files in os.walk(args.opusdir):
         for file in files:
             path = os.path.join(parent, file)
-            assert(path.startswith(args.opusdir + '/'))
-            path = path[len(args.opusdir + '/'):]
+            assert(path.startswith(args.opusdir))
+            path = path[len(args.opusdir):]
 
             src = os.path.join(args.flacdir, path)
             dst = os.path.join(args.opusdir, path)
